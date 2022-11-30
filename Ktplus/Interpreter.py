@@ -1801,6 +1801,14 @@ class Number(Value):
   def __repr__(self):
     return str(self.value)
 
+class Int(Number):
+  def __init__(self, value):
+    super().__init__(int(value))
+
+class Float(Number):
+  def __init__(self, value):
+    super().__init__(float(value))
+  
 class Boolean(Value):
   def __init__(self, value):
     super().__init__()
@@ -2140,11 +2148,11 @@ class BuiltInFunction(BaseFunction):
   execute_typeof.arg_names = ["obj"]
 
   def execute_mod(self, exec_ctx):
-    return RTResult().success(Number(int(exec_ctx.symbol_table.get('num1')) % int(exec_ctx.symbol_table.get('num2'))))
+    return RTResult().success(Int(exec_ctx.symbol_table.get('num1')) % int(exec_ctx.symbol_table.get('num2')))
   execute_mod.arg_names = ['num1', 'num2']
 
   def execute_rand(self, exec_ctx):
-    return RTResult().success(Number(int(str(random.random()).partition(".")[2])))
+    return RTResult().success(Int(str(random.random()).partition(".")[2]))
   execute_rand.arg_names = []
   
   def execute_int(self, exec_ctx):
@@ -2156,7 +2164,7 @@ class BuiltInFunction(BaseFunction):
         "invalid literal",
         exec_ctx
       ))
-    return RTResult().success(Number(int(num)))
+    return RTResult().success(Int(num))
   execute_int.arg_names = ['num']
 
   def execute_format(self, exec_ctx):
@@ -2190,10 +2198,10 @@ class BuiltInFunction(BaseFunction):
   
   def execute_exit(self, exec_ctx):
     status = exec_ctx.symbol_table.get('status')
-    if not isinstance(status, Number):
+    if not isinstance(status, Int):
       return RTResult.failure(Ktplus_ValueError(
         self.pos_start, self.pos_end,
-        "First argument must be a number",
+        "First argument must be a integer",
         exec_ctx
       ))
     os._exit(int(status))
@@ -2314,7 +2322,7 @@ class BuiltInFunction(BaseFunction):
         exec_ctx
       ))
     
-    return RTResult().success(Number(len(list_.elements)))
+    return RTResult().success(Int(len(list_.elements)))
   execute_len.arg_names = ["list"]
 
 
@@ -2430,9 +2438,14 @@ class Interpreter:
   ###################################
 
   def visit_NumberNode(self, node, context):
-    return RTResult().success(
-      Number(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
-    )
+    if type(node.tok.value) == int:
+      return RTResult().success(
+        Int(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+      )
+    else:
+      return RTResult().success(
+        Float(node.tok.value).set_context(context).set_pos(node.pos_start, node.pos_end)
+      )
 
   def visit_StringNode(self, node, context):
     return RTResult().success(
@@ -2483,7 +2496,7 @@ class Interpreter:
     if res.should_return(): return res
 
     context.symbol_table.set(var_name, value)
-    return res.success(Number.null)
+    return res.success(value)
 
   def visit_BinOpNode(self, node, context):
     res = RTResult()
@@ -2546,7 +2559,7 @@ class Interpreter:
     error = None
 
     if node.op_tok.type == TT_MINUS:
-      number, error = number.multed_by(Number(-1))
+      number, error = number.multed_by(Int(-1))
     elif node.op_tok.matches(TT_KEYWORD, 'not'):
       number, error = number.notted()
 
@@ -2619,7 +2632,7 @@ class Interpreter:
       step_value = res.register(self.visit(node.step_value_node, context))
       if res.should_return(): return res
     else:
-      step_value = Number(1)
+      step_value = Int(1)
 
     i = start_value.value
 
@@ -2629,7 +2642,7 @@ class Interpreter:
       condition = lambda: i >= end_value.value
     
     while condition():
-      context.symbol_table.set(node.var_name_tok.value, Number(i))
+      context.symbol_table.set(node.var_name_tok.value, Int(i))
       i += step_value.value
 
       value = res.register(self.visit(node.body_node, context))
