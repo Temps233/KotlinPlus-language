@@ -1,0 +1,11 @@
+fun join(substr, ls){
+    result = ""
+    for i from 1 to len(ls){
+        if i == 1 {
+            result = result + str(ls/i)
+        } else {
+            result = result + substr + str(ls/i)
+        }
+    }
+    return result
+}

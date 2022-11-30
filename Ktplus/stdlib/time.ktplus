@@ -1,0 +1,8 @@
+# ****************************************************************
+# Copyright (c) 2022 KotlinPlus Development Team
+# ****************************************************************
+
+include("_time")
+include("_time_ns")
+time = _time
+time_ns = _time_ns
